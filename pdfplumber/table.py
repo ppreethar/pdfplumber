@@ -438,6 +438,60 @@ class Table(object):
 
         return table_arr
 
+    def extract_updated(
+        self,
+        x_tolerance: T_num = utils.DEFAULT_X_TOLERANCE,
+        y_tolerance: T_num = utils.DEFAULT_Y_TOLERANCE,
+    ) -> List[List[Optional[str]]]:
+
+        chars = self.page.chars
+        table_arr = []
+        table_arr1 = []
+
+        def char_in_bbox(char: T_obj, bbox: T_bbox) -> bool:
+            v_mid = (char["top"] + char["bottom"]) / 2
+            h_mid = (char["x0"] + char["x1"]) / 2
+            x0, top, x1, bottom = bbox
+            return bool(
+                (h_mid >= x0) and (h_mid < x1) and (v_mid >= top) and (v_mid < bottom)
+            )
+
+        for row in self.rows:
+            arr = []
+            arr1 = []
+            row_chars = [char for char in chars if char_in_bbox(char, row.bbox)]
+
+            for cell in row.cells:
+                if cell is None:
+                    cell_text = None
+                    cell_words = []
+                else:
+                    cell_chars = [
+                        char for char in row_chars if char_in_bbox(char, cell)
+                    ]
+
+                    if len(cell_chars):
+                        cell_text = utils.extract_text(
+                            cell_chars,
+                            x_tolerance=x_tolerance,
+                            y_tolerance=y_tolerance,
+                        ).strip()
+                        cell_words = utils.extract_words(
+                            cell_chars,
+                            x_tolerance=x_tolerance,
+                            y_tolerance=y_tolerance,                            
+                        )
+                    else:
+                        cell_text = ""
+                        cell_words = []
+                arr.append(cell_text)
+                if cell_words != []:
+                    arr1.extend(cell_words)
+            table_arr.append(arr)
+            if arr1 != []:
+                table_arr1.extend(arr1)
+        return table_arr, table_arr1
+
 
 TABLE_STRATEGIES = ["lines", "lines_strict", "text", "explicit"]
 NON_NEGATIVE_SETTINGS = [

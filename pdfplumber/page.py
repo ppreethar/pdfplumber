@@ -273,7 +273,7 @@ class Page(Container):
         return TableFinder(self, tset).tables
 
     def extract_tables(
-        self, table_settings: Optional[T_table_settings] = None
+        self, table_settings: Optional[T_table_settings] = None, get_coord = False
     ) -> List[List[List[Optional[str]]]]:
         tset = TableSettings.resolve(table_settings)
         tables = self.find_tables(tset)
@@ -282,10 +282,14 @@ class Page(Container):
             k: getattr(tset, "text_" + k) for k in ["x_tolerance", "y_tolerance"]
         }
 
-        return [table.extract(**extract_kwargs) for table in tables]
+        if get_coord:
+            return [table.extract_updated(**extract_kwargs) for table in tables]
+        else:
+            return [table.extract(**extract_kwargs) for table in tables]
+
 
     def extract_table(
-        self, table_settings: Optional[T_table_settings] = None
+        self, table_settings: Optional[T_table_settings] = None, get_coord = False
     ) -> Optional[List[List[Optional[str]]]]:
         tset = TableSettings.resolve(table_settings)
         tables = self.find_tables(tset)
@@ -303,7 +307,10 @@ class Page(Container):
             k: getattr(tset, "text_" + k) for k in ["x_tolerance", "y_tolerance"]
         }
 
-        return largest.extract(**extract_kwargs)
+        if get_coord:
+            return largest.extract_updated(**extract_kwargs)
+        else:
+            return largest.extract(**extract_kwargs)
 
     def _get_text_layout(self, **kwargs: Any) -> utils.TextLayout:
         defaults = dict(x_shift=self.bbox[0], y_shift=self.bbox[1])
